@@ -1,0 +1,31 @@
+{
+  "name": "Stab — Gestión de Inventario",
+  "short_name": "Stab",
+  "description": "Sistema de gestión de stock e inventario para Inversiones Cleer David C.A. — v2.0.0",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0e1a",
+  "theme_color": "#0a0e1a",
+  "orientation": "any",
+  "lang": "es",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
