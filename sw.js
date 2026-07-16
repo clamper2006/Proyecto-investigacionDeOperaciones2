@@ -1,5 +1,5 @@
 // Stab PWA — Service Worker v2.0.0
-const CACHE_NAME = 'stab-v2.0.0';
+const CACHE_NAME = 'stab-v2.0.1';
 const ASSETS = [
   './',
   './index.html',
