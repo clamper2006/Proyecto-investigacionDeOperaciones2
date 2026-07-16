@@ -8,21 +8,19 @@ const SUPABASE_URL = "https://pwmewoorpcevnclqyuvj.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3bWV3b29ycGNldm5jbHF5dXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODc2NzIsImV4cCI6MjA5OTc2MzY3Mn0.UEhWpiDuucFARpMQQETpsiOENaoyVO5ovwav_9FAHZ4";
 
 // ---- INICIALIZACIÓN DE SUPABASE ----
-let supabaseInstance = null;
-
 try {
-  // El CDN de Supabase v2 expone el objeto como 'supabase' en window, no 'supabasejs'
+  // El CDN de Supabase ya creó window.supabase.
   if (typeof window.supabase !== 'undefined') {
-    supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Sobrescribimos la variable global directamente con la instancia del cliente.
+    // Al no usar "const" ni "let", evitamos el error de duplicado "already been declared"
+    // y todo tu código que ya usa "supabase" funcionará automáticamente.
+    window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } else {
     console.error("El SDK de Supabase no se cargó correctamente desde el CDN.");
   }
 } catch (err) {
   console.error("Error crítico de inicialización:", err);
 }
-
-// Creamos esta constante para que todo el resto de tu código (que ya usa "supabase") funcione sin tocar nada más
-const supabase = supabaseInstance;
 
 // ---- ESTADO GLOBAL DEL SPREADSHEET ----
 let productsState = [];
