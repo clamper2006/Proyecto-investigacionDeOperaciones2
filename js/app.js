@@ -7,18 +7,22 @@
 const SUPABASE_URL = "https://pwmewoorpcevnclqyuvj.supabase.co"; 
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3bWV3b29ycGNldm5jbHF5dXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODc2NzIsImV4cCI6MjA5OTc2MzY3Mn0.UEhWpiDuucFARpMQQETpsiOENaoyVO5ovwav_9FAHZ4";
 
-let supabase = null;
+// ---- INICIALIZACIÓN DE SUPABASE ----
+let supabaseInstance = null;
 
-// Inicialización de Supabase con validación de entorno
 try {
-  if (typeof supabasejs !== 'undefined') {
-    supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  // El CDN de Supabase v2 expone el objeto como 'supabase' en window, no 'supabasejs'
+  if (typeof window.supabase !== 'undefined') {
+    supabaseInstance = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } else {
-    console.error("Supabase SDK no está cargado. Revisa la conexión de red.");
+    console.error("El SDK de Supabase no se cargó correctamente desde el CDN.");
   }
 } catch (err) {
-  console.error("Error inicializando Supabase Client:", err);
+  console.error("Error crítico de inicialización:", err);
 }
+
+// Creamos esta constante para que todo el resto de tu código (que ya usa "supabase") funcione sin tocar nada más
+const supabase = supabaseInstance;
 
 // ---- ESTADO GLOBAL DEL SPREADSHEET ----
 let productsState = [];
