@@ -1,7 +1,7 @@
 /* =========================================
    STAB PWA — Service Worker v2.1.0-Supabase
    ========================================= */
-const CACHE_NAME = 'stab-v2.1.1-supabase';
+const CACHE_NAME = 'stab-v2.1.2-supabase';
 const ASSETS = [
   './',
   './index.html',
