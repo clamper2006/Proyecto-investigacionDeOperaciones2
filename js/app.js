@@ -1,13 +1,18 @@
 // ============================================================
-//  STAB v2.0.0 — app.js
+//  STAB v2.0.0 — app.js (Supabase Edition)
 //  Gestión de Inventario — Inversiones Cleer David C.A.
-//  Modelo Estacional + Clasificación ABC
+//  Modelo Estacional + Clasificación ABC + Cloud Sync
 // ============================================================
 
 'use strict';
 
-// ─── CONSTANTS ────────────────────────────────────────────────
-const STORAGE_KEY = 'stab_products_v2';
+// ─── CREDENCIALES DE SUPABASE ────────────────────────────────
+const SUPABASE_URL = 'https://pwmewoorpcevnclqyuvj.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3bWV3b29ycGNldm5jbHF5dXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODc2NzIsImV4cCI6MjA5OTc2MzY3Mn0.UEhWpiDuucFARpMQQETpsiOENaoyVO5ovwav_9FAHZ4';
+
+// Inicialización del cliente de Supabase
+const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
 const APP_VERSION = '2.0.0';
 
 // Modelo estacional — Investigación de Operaciones UNEFA
@@ -17,16 +22,16 @@ const SEASON_STORAGE_KEY   = 'stab_season_mode';
 
 const CATEGORIES = ['Todos','Medicina','Alimentos','Bebidas','Higiene','Limpieza','Ferretería','Papelería','Otros'];
 
-// Demo products loaded only once on first run
+// Productos Demo para precarga en primer registro
 const DEMO_PRODUCTS = [
-  { id: uid(), name: 'Paracetamol 500mg', category: 'Medicina', unit: 'Cajas', currentStock: 45, minStock: 20, maxStock: 100, price: 8.50, costPrice: 5.00, notes: 'Guardar en lugar fresco y seco', createdAt: Date.now() },
-  { id: uid(), name: 'Ibuprofeno 400mg', category: 'Medicina', unit: 'Cajas', currentStock: 8, minStock: 15, maxStock: 60, price: 10.00, costPrice: 6.50, notes: '', createdAt: Date.now() },
-  { id: uid(), name: 'Arroz Mary 1kg', category: 'Alimentos', unit: 'Kg', currentStock: 0, minStock: 10, maxStock: 50, price: 2.50, costPrice: 1.80, notes: '', createdAt: Date.now() },
-  { id: uid(), name: 'Azúcar Blanca 1kg', category: 'Alimentos', unit: 'Kg', currentStock: 30, minStock: 10, maxStock: 100, price: 2.00, costPrice: 1.30, notes: '', createdAt: Date.now() },
-  { id: uid(), name: 'Aceite La Favorita 1L', category: 'Alimentos', unit: 'L', currentStock: 3, minStock: 8, maxStock: 40, price: 4.50, costPrice: 3.20, notes: 'No exponer al sol', createdAt: Date.now() },
-  { id: uid(), name: 'Agua Mineral 600mL', category: 'Bebidas', unit: 'Unidades', currentStock: 48, minStock: 20, maxStock: 120, price: 1.00, costPrice: 0.60, notes: '', createdAt: Date.now() },
-  { id: uid(), name: 'Shampoo Clear 400mL', category: 'Higiene', unit: 'Unidades', currentStock: 12, minStock: 5, maxStock: 30, price: 6.00, costPrice: 4.00, notes: '', createdAt: Date.now() },
-  { id: uid(), name: 'Cloro Líquido 1L', category: 'Limpieza', unit: 'Unidades', currentStock: 6, minStock: 10, maxStock: 30, price: 3.00, costPrice: 1.80, notes: 'Almacenar en lugar ventilado', createdAt: Date.now() },
+  { name: 'Paracetamol 500mg', category: 'Medicina', unit: 'Cajas', currentStock: 45, minStock: 20, maxStock: 100, price: 8.50, costPrice: 5.00, notes: 'Guardar en lugar fresco y seco' },
+  { name: 'Ibuprofeno 400mg', category: 'Medicina', unit: 'Cajas', currentStock: 8, minStock: 15, maxStock: 60, price: 10.00, costPrice: 6.50, notes: '' },
+  { name: 'Arroz Mary 1kg', category: 'Alimentos', unit: 'Kg', currentStock: 0, minStock: 10, maxStock: 50, price: 2.50, costPrice: 1.80, notes: '' },
+  { name: 'Azúcar Blanca 1kg', category: 'Alimentos', unit: 'Kg', currentStock: 30, minStock: 10, maxStock: 100, price: 2.00, costPrice: 1.30, notes: '' },
+  { name: 'Aceite La Favorita 1L', category: 'Alimentos', unit: 'L', currentStock: 3, minStock: 8, maxStock: 40, price: 4.50, costPrice: 3.20, notes: 'No exponer al sol' },
+  { name: 'Agua Mineral 600mL', category: 'Bebidas', unit: 'Unidades', currentStock: 48, minStock: 20, maxStock: 120, price: 1.00, costPrice: 0.60, notes: '' },
+  { name: 'Shampoo Clear 400mL', category: 'Higiene', unit: 'Unidades', currentStock: 12, minStock: 5, maxStock: 30, price: 6.00, costPrice: 4.00, notes: '' },
+  { name: 'Cloro Líquido 1L', category: 'Limpieza', unit: 'Unidades', currentStock: 6, minStock: 10, maxStock: 30, price: 3.00, costPrice: 1.80, notes: 'Almacenar en lugar ventilado' },
 ];
 
 // ─── STATE ────────────────────────────────────────────────────
@@ -41,32 +46,110 @@ let state = {
   deleteId: null,
   seasonMode: 'low',   // 'low' | 'high'
   abcMap: new Map(),    // product id → 'A'|'B'|'C'
+  authMode: 'login',    // 'login' | 'register'
+  currentUser: null
 };
 
-// ─── STORAGE ──────────────────────────────────────────────────
-function loadProducts() {
+// ─── AUTHENTICATION LOGIC ──────────────────────────────────────
+
+async function handleAuthSubmit(e) {
+  e.preventDefault();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const submitBtn = document.getElementById('loginSubmitBtn');
+
+  if (!email || !password) {
+    showToast('Por favor introduce tu correo y contraseña.', 'error');
+    return;
+  }
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = state.authMode === 'login' ? 'Iniciando sesión...' : 'Registrando usuario...';
+
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      state.products = JSON.parse(raw);
+    if (state.authMode === 'login') {
+      const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      showToast('Sesión iniciada con éxito.', 'success');
     } else {
-      state.products = DEMO_PRODUCTS;
-      saveProducts();
+      const { data, error } = await _supabase.auth.signUp({ email, password });
+      if (error) throw error;
+      showToast('Registro completado. ¡Bienvenido!', 'success');
     }
-  } catch {
+  } catch (err) {
+    showToast(err.message, 'error');
+  } finally {
+    submitBtn.disabled = false;
+    updateAuthDOM();
+  }
+}
+
+async function handleLogout() {
+  try {
+    const { error } = await _supabase.auth.signOut();
+    if (error) throw error;
+    showToast('Sesión cerrada correctamente.', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+
+function updateAuthDOM() {
+  const isLogged = !!state.currentUser;
+
+  // Switcheo de pantallas principales
+  document.getElementById('loginScreen').style.display = isLogged ? 'none' : 'flex';
+  document.getElementById('appShell').style.display = isLogged ? 'flex' : 'none';
+  document.getElementById('bottomNav').style.display = isLogged ? 'flex' : 'none';
+  document.getElementById('fab').style.display = isLogged ? 'grid' : 'none';
+
+  if (!isLogged) {
+    document.getElementById('loginForm').reset();
+  }
+}
+
+// ─── CLOUD DATABASE SYNC ──────────────────────────────────────
+
+async function loadProducts() {
+  if (!state.currentUser) return;
+  
+  try {
+    const { data, error } = await _supabase
+      .from('products')
+      .select('*')
+      .order('name', { ascending: true });
+
+    if (error) throw error;
+
+    // Si el usuario es nuevo y no tiene productos, le inyectamos los demos
+    if (data.length === 0) {
+      const initialDemos = DEMO_PRODUCTS.map(p => ({
+        ...p,
+        userId: state.currentUser.id
+      }));
+
+      const { data: insertedData, error: insertError } = await _supabase
+        .from('products')
+        .insert(initialDemos)
+        .select();
+
+      if (insertError) throw insertError;
+      state.products = insertedData;
+    } else {
+      state.products = data;
+    }
+
+    renderDashboard();
+    if (state.currentView === 'inventory') renderInventory();
+    else updateInvCount();
+
+  } catch (err) {
+    showToast('Error de sincronización remota: ' + err.message, 'error');
     state.products = [];
   }
 }
 
-function saveProducts() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.products));
-}
-
 // ─── HELPERS ──────────────────────────────────────────────────
-function uid() {
-  return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
-}
-
 function fmtDate(ts) {
   return new Date(ts).toLocaleDateString('es-VE', { year: 'numeric', month: 'short', day: 'numeric' });
 }
@@ -138,10 +221,6 @@ function categoryIcon(cat) {
   return icons[cat] || '📦';
 }
 
-function getInitials(name) {
-  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
-}
-
 // ─── VIEW SWITCHER ────────────────────────────────────────────
 function switchView(view) {
   state.currentView = view;
@@ -183,7 +262,7 @@ function updateDashDate() {
   const now = new Date();
   const days = ['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
   const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
-  el.textContent = `${days[now.getDay()]}, ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
+  el.textContent = `${days[now.getDay()]} ${now.getDate()} de ${months[now.getMonth()]} de ${now.getFullYear()}`;
 }
 
 function renderKPIs() {
@@ -490,7 +569,6 @@ function productCardHTML(p) {
 
 // ─── SEASON UI ────────────────────────────────────────────────
 function updateSeasonUI() {
-  // Dashboard toggle
   const btnLow  = document.getElementById('seasonBtnLow');
   const btnHigh = document.getElementById('seasonBtnHigh');
   const slider  = document.getElementById('seasonSlider');
@@ -517,14 +595,6 @@ function updateSeasonUI() {
     if (sbToggle) sbToggle.classList.toggle('season-high', isHigh);
     if (sbSlider) sbSlider.style.transform = isHigh ? 'translateX(100%)' : 'translateX(0)';
   }
-
-  // Update topbar toggle (mobile)
-  const tbLow  = document.getElementById('topbarSeasonLow');
-  const tbHigh = document.getElementById('topbarSeasonHigh');
-  if (tbLow && tbHigh) {
-    tbLow.classList.toggle('active', !isHigh);
-    tbHigh.classList.toggle('active', isHigh);
-  }
 }
 
 function setSeasonMode(mode) {
@@ -532,7 +602,7 @@ function setSeasonMode(mode) {
   localStorage.setItem(SEASON_STORAGE_KEY, mode);
   updateSeasonUI();
   renderDashboard();
-  renderInventory();
+  if (state.currentView === 'inventory') renderInventory();
   const label = mode === 'high' ? '🏖️ Temporada Alta activada' : '📉 Temporada Baja activada';
   showToast(label, mode === 'high' ? 'info' : 'success');
 }
@@ -580,7 +650,7 @@ function openProductModal(id) {
       const abc = state.abcMap.get(p.id) || 'C';
       const abcColors = { A: '#fbbf24', B: '#3b82f6', C: '#5c6b85' };
       const abcNames  = { A: 'Clase A — Alta inversión', B: 'Clase B — Inversión media', C: 'Clase C — Baja inversión' };
-      abcBadge.textContent = abcNames[abc];
+      abcBadge.textContent = abc;
       abcBadge.style.color = abcColors[abc];
       abcBadge.style.borderColor = abcColors[abc];
       abcGroup.style.display = '';
@@ -643,7 +713,7 @@ function validateForm() {
   return ok;
 }
 
-function saveProduct() {
+async function saveProduct() {
   if (!validateForm()) {
     showToast('Completa todos los campos requeridos correctamente.', 'error');
     return;
@@ -660,24 +730,51 @@ function saveProduct() {
   const price    = parseFloat(document.getElementById('fPrice').value) || 0;
   const notes    = document.getElementById('fNotes').value.trim();
 
-  if (id) {
-    // Update
-    const idx = state.products.findIndex(p => p.id === id);
-    if (idx !== -1) {
-      state.products[idx] = { ...state.products[idx], name, category, unit, currentStock: current, minStock: min, maxStock: max, costPrice: cost, price, notes, updatedAt: Date.now() };
-      showToast('Producto actualizado correctamente.', 'success');
-    }
-  } else {
-    // Create
-    state.products.push({ id: uid(), name, category, unit, currentStock: current, minStock: min, maxStock: max, costPrice: cost, price, notes, createdAt: Date.now(), updatedAt: Date.now() });
-    showToast('Producto añadido al inventario.', 'success');
-  }
+  const productData = {
+    name,
+    category,
+    unit,
+    currentStock: current,
+    minStock: min,
+    maxStock: max,
+    costPrice: cost,
+    price,
+    notes,
+    userId: state.currentUser.id,
+    updatedAt: new Date().toISOString()
+  };
 
-  saveProducts();
-  closeProductModal();
-  renderDashboard();
-  if (state.currentView === 'inventory') renderInventory();
-  else updateInvCount();
+  const saveBtn = document.getElementById('saveProductBtn');
+  saveBtn.disabled = true;
+
+  try {
+    if (id) {
+      // Editar en Supabase
+      const { error } = await _supabase
+        .from('products')
+        .update(productData)
+        .eq('id', id);
+
+      if (error) throw error;
+      showToast('Producto actualizado en la nube.', 'success');
+    } else {
+      // Insertar en Supabase
+      const { error } = await _supabase
+        .from('products')
+        .insert([productData]);
+
+      if (error) throw error;
+      showToast('Producto guardado en la nube.', 'success');
+    }
+
+    closeProductModal();
+    await loadProducts();
+
+  } catch (err) {
+    showToast('Error al guardar: ' + err.message, 'error');
+  } finally {
+    saveBtn.disabled = false;
+  }
 }
 
 // ─── CONFIRM DELETE ───────────────────────────────────────────
@@ -694,15 +791,25 @@ function closeConfirm() {
   state.deleteId = null;
 }
 
-function deleteProduct() {
+async function deleteProduct() {
   if (!state.deleteId) return;
   const p = state.products.find(x => x.id === state.deleteId);
-  state.products = state.products.filter(x => x.id !== state.deleteId);
-  saveProducts();
-  closeConfirm();
-  showToast(`"${p?.name}" eliminado del inventario.`, 'success');
-  renderDashboard();
-  if (state.currentView === 'inventory') renderInventory();
+
+  try {
+    const { error } = await _supabase
+      .from('products')
+      .delete()
+      .eq('id', state.deleteId);
+
+    if (error) throw error;
+
+    showToast(`"${p?.name}" eliminado del inventario remoto.`, 'success');
+    closeConfirm();
+    await loadProducts();
+
+  } catch (err) {
+    showToast('Error al eliminar del servidor: ' + err.message, 'error');
+  }
 }
 
 // ─── ABOUT MODAL ──────────────────────────────────────────────
@@ -754,13 +861,50 @@ document.addEventListener('DOMContentLoaded', () => {
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
-  // Load data & season mode
-  loadProducts();
-  loadSeasonMode();
+  // Escuchar cambios de sesión de Supabase
+  _supabase.auth.onAuthStateChange((event, session) => {
+    state.currentUser = session?.user || null;
+    updateAuthDOM();
+    if (state.currentUser) {
+      loadProducts();
+    } else {
+      state.products = [];
+    }
+  });
 
-  // Initial render
-  renderDashboard();
-  updateInvCount();
+  // ─ Controladores de Login/Registro UI ─
+  const tabLogin = document.getElementById('tabLogin');
+  const tabRegister = document.getElementById('tabRegister');
+  const loginTitleText = document.getElementById('loginTitleText');
+  const loginSubtitleText = document.getElementById('loginSubtitleText');
+  const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+
+  tabLogin.addEventListener('click', () => {
+    state.authMode = 'login';
+    tabLogin.classList.add('active');
+    tabRegister.classList.remove('active');
+    loginTitleText.textContent = 'Iniciar Sesión';
+    loginSubtitleText.textContent = 'Gestión de Inventario — Cleer David C.A.';
+    loginSubmitBtn.innerHTML = '<span>Ingresar al sistema</span> ➔';
+  });
+
+  tabRegister.addEventListener('click', () => {
+    state.authMode = 'register';
+    tabRegister.classList.add('active');
+    tabLogin.classList.remove('active');
+    loginTitleText.textContent = 'Registrarse';
+    loginSubtitleText.textContent = 'Crea una cuenta para tu distribuidora';
+    loginSubmitBtn.innerHTML = '<span>Crear cuenta nueva</span> ➔';
+  });
+
+  document.getElementById('loginForm').addEventListener('submit', handleAuthSubmit);
+
+  // ─ Logout Event Listeners ─
+  document.getElementById('sidebarLogoutBtn').addEventListener('click', handleLogout);
+  document.getElementById('topbarLogoutBtn').addEventListener('click', handleLogout);
+
+  loadSeasonMode();
+  updateSeasonUI();
 
   // ─ Season toggle (dashboard) ─
   const seasonBtnLow  = document.getElementById('seasonBtnLow');
@@ -773,12 +917,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const sbSeasonHigh = document.getElementById('sidebarSeasonHigh');
   if (sbSeasonLow)  sbSeasonLow.addEventListener('click',  () => setSeasonMode('low'));
   if (sbSeasonHigh) sbSeasonHigh.addEventListener('click', () => setSeasonMode('high'));
-
-  // ─ Season toggle (topbar — mobile global) ─
-  const tbSeasonLow  = document.getElementById('topbarSeasonLow');
-  const tbSeasonHigh = document.getElementById('topbarSeasonHigh');
-  if (tbSeasonLow)  tbSeasonLow.addEventListener('click',  () => setSeasonMode('low'));
-  if (tbSeasonHigh) tbSeasonHigh.addEventListener('click', () => setSeasonMode('high'));
 
   // ─ Navigation ─
   document.querySelectorAll('[data-view]').forEach(el => {
@@ -887,6 +1025,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  console.log(`%c◈ STAB v${APP_VERSION}`, 'color:#10d9a0;font-size:20px;font-weight:800;');
+  console.log(`%c◈ STAB v${APP_VERSION} (Supabase Connected)`, 'color:#10d9a0;font-size:20px;font-weight:800;');
   console.log('%cGestión de Inventario — Cleer David C.A.', 'color:#6b7a9e;font-size:12px;');
 });
