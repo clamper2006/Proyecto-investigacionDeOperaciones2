@@ -11,7 +11,7 @@
   --card:        #131928;
   --card-hover:  #1a2235;
   --border:      rgba(255,255,255,0.06);
-  --border-md:   rgba(255,255,255,0.10);
+  --border-md:    rgba(255,255,255,0.10);
   --accent:      #10d9a0;
   --accent-2:    #0ec48e;
   --accent-dim:  rgba(16,217,160,0.10);
@@ -52,6 +52,29 @@ button, input, select, textarea {
   border: none;
   outline: none;
 }
+
+/* ---- SCROLLBARS ---- */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-md);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}
+
+/* ---- UTILITIES ---- */
+.text-accent  { color: var(--accent); }
+.text-success { color: var(--ok); }
+.text-warn    { color: var(--warn); }
+.text-danger  { color: var(--danger); }
+.text-muted   { color: var(--text-3); }
 
 /* ---- LOGIN SCREEN ---- */
 .login-screen {
@@ -305,6 +328,11 @@ button, input, select, textarea {
 }
 
 /* ---- USER AVATAR ---- */
+.user-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .user-avatar {
   width: 36px;
   height: 36px;
@@ -393,6 +421,51 @@ button, input, select, textarea {
 }
 .table td { color: var(--text-2); }
 .table tr:hover td { color: var(--text); background: rgba(255,255,255,0.01); }
+
+/* ---- DASHBOARD GRID ---- */
+.dashboard-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+@media (min-width: 769px) {
+  .dashboard-sections {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+}
+
+/* ---- STATS PANEL RESUMEN ---- */
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 15px;
+}
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 18px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s;
+}
+.stat-item:hover {
+  border-color: var(--border-md);
+}
+.stat-label {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 500;
+}
+.stat-value {
+  font-size: 16px;
+  font-weight: 700;
+}
 
 /* ---- BADGES ---- */
 .badge {
@@ -518,6 +591,21 @@ button, input, select, textarea {
   display: flex;
   justify-content: flex-end;
   gap: 12px;
+}
+
+/* ---- ANIMATE UP ---- */
+.animate-up {
+  animation: animateUp 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes animateUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* ---- ABOUT & INFO ROW ---- */
