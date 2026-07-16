@@ -1,5 +1,5 @@
-// Stab PWA — Service Worker v2.0.0
-const CACHE_NAME = 'stab-v2.0.1';
+// Stab PWA — Service Worker v2.1.0-Supabase
+const CACHE_NAME = 'stab-v2.1.0-supabase';
 const ASSETS = [
   './',
   './index.html',
@@ -9,12 +9,14 @@ const ASSETS = [
   './icons/icon.svg',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap'
+  'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
 
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
+      // Filtrar fuentes o CDNs externos que no requieran precarga estricta si da fallos
       return cache.addAll(ASSETS.filter(a => !a.startsWith('https')));
     })
   );
@@ -31,6 +33,11 @@ self.addEventListener('activate', e => {
 });
 
 self.addEventListener('fetch', e => {
+  // Saltar intercepciones para llamadas directas a las APIs externas de Supabase
+  if (e.request.url.includes('supabase.co')) {
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(cached => {
       return cached || fetch(e.request).catch(() => {
