@@ -97,7 +97,8 @@ function setupAuthListeners() {
     }
   });
 
-  // Evento Iniciar Sesión con Google (Flujo Depurado)
+  
+ // Evento Iniciar Sesión con Google (Flujo Depurado)
   document.getElementById("btn-google-login").addEventListener("click", async (e) => {
     e.preventDefault();
     showToast("Redirigiendo a Google...", "info");
@@ -110,7 +111,8 @@ function setupAuthListeners() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin,
+        // SOLUCIÓN: Combina el dominio de GitHub con la ruta exacta de tu repositorio
+        redirectTo: window.location.origin + window.location.pathname,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
@@ -157,7 +159,8 @@ function handleAuthState(session) {
 
 // ---- CARGA Y MANIPULACIÓN DE DATOS DESDE SUPABASE ----
 async function loadInventoryData() {
-  if (!supabase) return;
+  if (!window.supabase) return;
+  const supabase = window.supabase;
 
   const { data, error } = await supabase
     .from("products")
