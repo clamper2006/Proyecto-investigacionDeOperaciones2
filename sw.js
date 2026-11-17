@@ -1,7 +1,7 @@
 /* =========================================
    STAB PWA — Service Worker v2.1.0-Supabase
    ========================================= */
-const CACHE_NAME = 'stab-v2.1.3-supabase';
+const CACHE_NAME = 'stab-v2.1.4-supabase';
 const ASSETS = [
   './',
   './index.html',
@@ -51,6 +51,7 @@ self.addEventListener('fetch', e => {
     url.includes('supabase.co') || 
     url.includes('accounts.google.com') ||
     url.includes('access_token=') ||
+    url.includes('code=') ||
     url.includes('error=') ||
     url.includes('#')
   ) {

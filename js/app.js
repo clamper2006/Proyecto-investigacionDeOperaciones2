@@ -4,8 +4,8 @@
    ========================================= */
 
 // ---- CONFIGURACIÓN DE SUPABASE ----
-const SUPABASE_URL = "https://pwmewoorpcevnclqyuvj.supabase.co"; 
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB3bWV3b29ycGNldm5jbHF5dXZqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODQxODc2NzIsImV4cCI6MjA5OTc2MzY3Mn0.UEhWpiDuucFARpMQQETpsiOENaoyVO5ovwav_9FAHZ4";
+const SUPABASE_URL = "https://giimknuufvrlgebfsbyz.supabase.co"; 
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpaW1rbnV1ZnZybGdlYmZzYnl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ5Mzc4MzcsImV4cCI6MjExMDUxMzgzN30.wFowxudE2Ix204cjperwyTFTuxzP2xbdCz6Q3NZRU24";
 
 // ---- INICIALIZACIÓN DE SUPABASE ----
 try {

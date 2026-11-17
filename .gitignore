@@ -1,0 +1,9 @@
+# Sensitive files and credentials
+supabase/*.txt
+*.key
+.env
+.env.*
+
+# OS and temp files
+Thumbs.db
+.DS_Store
