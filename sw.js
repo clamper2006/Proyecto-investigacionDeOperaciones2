@@ -1,7 +1,7 @@
 /* =========================================
-   STAB PWA — Service Worker v2.2.0
+   STAB PWA — Service Worker v2.2.1
    ========================================= */
-const CACHE_NAME = 'stab-v2.2.0';
+const CACHE_NAME = 'stab-v2.2.1';
 const ASSETS = [
   './',
   './index.html',

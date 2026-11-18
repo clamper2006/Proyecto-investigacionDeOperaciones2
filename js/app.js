@@ -42,6 +42,7 @@ function initApp() {
   setupSeasonalToggle();
   setupInstallBanner();
   setupUserMenu();
+  setupTutorial();
 }
 
 // Rellenar dinámicamente campos de categoría
@@ -156,6 +157,7 @@ function handleAuthState(session) {
     if (panelAvatar) panelAvatar.textContent = initial;
     document.getElementById("userEmailDisplay").textContent = email;
     loadInventoryData();
+    checkTutorialWelcome(currentUserId);
   } else {
     loginScreen.style.display = "flex";
     appShell.style.display = "none";
@@ -189,9 +191,13 @@ function setupSeasonalToggle() {
     isSeasonalActive = !isSeasonalActive;
     if (isSeasonalActive) {
       seasonBtn.classList.add("active");
+      const label = seasonBtn.querySelector(".season-label");
+      if (label) label.textContent = "Modo Estacional Activo";
       showToast("Modo Estacional Activo (+40% en umbrales de seguridad)", "info");
     } else {
       seasonBtn.classList.remove("active");
+      const label = seasonBtn.querySelector(".season-label");
+      if (label) label.textContent = "Activar Modo Estacional";
       showToast("Modo Estacional Desactivado", "info");
     }
     renderDashboard();
@@ -537,6 +543,12 @@ function setupNavigation() {
   document.getElementById("openAboutBtn").addEventListener("click", () => aboutModal.style.display = "flex");
   document.getElementById("closeAboutModalBtn").addEventListener("click", () => aboutModal.style.display = "none");
   document.getElementById("closeAboutBtn").addEventListener("click", () => aboutModal.style.display = "none");
+
+  // Tutorial Desktop
+  const tutorialBtnDesktop = document.getElementById("openTutorialBtnDesktop");
+  if (tutorialBtnDesktop) {
+    tutorialBtnDesktop.addEventListener("click", () => openTutorial());
+  }
 }
 
 // ---- MENÚ DE USUARIO (MÓVIL) ----
@@ -558,6 +570,15 @@ function setupUserMenu() {
   userDropdown.addEventListener("click", (e) => {
     e.stopPropagation();
   });
+
+  // "Tutorial" desde el menú móvil
+  const openTutorialMobile = document.getElementById("openTutorialBtnMobile");
+  if (openTutorialMobile) {
+    openTutorialMobile.addEventListener("click", () => {
+      userDropdown.classList.remove("open");
+      openTutorial();
+    });
+  }
 
   // "Acerca de" desde el menú desplegable móvil
   document.getElementById("openAboutBtnMobile").addEventListener("click", () => {
@@ -627,4 +648,140 @@ function setupInstallBanner() {
       banner.classList.remove("visible");
     }
   });
+}
+
+
+// ---- TUTORIAL DE BIENVENIDA ----
+let currentTutorialStep = 0;
+const TOTAL_TUTORIAL_STEPS = 5;
+
+function setupTutorial() {
+  const modal = document.getElementById("tutorialModal");
+  if (!modal) return;
+
+  const nextBtn = document.getElementById("tutorialNextBtn");
+  const prevBtn = document.getElementById("tutorialPrevBtn");
+  const skipBtn = document.getElementById("tutorialSkipBtn");
+  const dots = document.querySelectorAll(".tutorial-step-dot");
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      if (currentTutorialStep < TOTAL_TUTORIAL_STEPS - 1) {
+        goToTutorialStep(currentTutorialStep + 1);
+      } else {
+        closeTutorial(true);
+      }
+    });
+  }
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      if (currentTutorialStep > 0) {
+        goToTutorialStep(currentTutorialStep - 1);
+      }
+    });
+  }
+
+  if (skipBtn) {
+    skipBtn.addEventListener("click", () => {
+      closeTutorial(true);
+    });
+  }
+
+  dots.forEach(dot => {
+    dot.addEventListener("click", () => {
+      const step = parseInt(dot.getAttribute("data-step"), 10);
+      if (!isNaN(step)) goToTutorialStep(step);
+    });
+  });
+
+  // Cerrar al hacer click fuera de la tarjeta
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) {
+      closeTutorial(true);
+    }
+  });
+
+  // Botón para abrir desde el modal "Acerca de"
+  const openFromAbout = document.getElementById("openTutorialFromAboutBtn");
+  if (openFromAbout) {
+    openFromAbout.addEventListener("click", () => {
+      const aboutModal = document.getElementById("aboutModal");
+      if (aboutModal) aboutModal.style.display = "none";
+      openTutorial();
+    });
+  }
+}
+
+function goToTutorialStep(stepIndex) {
+  currentTutorialStep = Math.max(0, Math.min(stepIndex, TOTAL_TUTORIAL_STEPS - 1));
+
+  const steps = document.querySelectorAll(".tutorial-step");
+  const dots = document.querySelectorAll(".tutorial-step-dot");
+  const prevBtn = document.getElementById("tutorialPrevBtn");
+  const nextBtn = document.getElementById("tutorialNextBtn");
+
+  steps.forEach(step => {
+    const s = parseInt(step.getAttribute("data-step"), 10);
+    if (s === currentTutorialStep) {
+      step.classList.add("active");
+    } else {
+      step.classList.remove("active");
+    }
+  });
+
+  dots.forEach(dot => {
+    const d = parseInt(dot.getAttribute("data-step"), 10);
+    if (d === currentTutorialStep) {
+      dot.classList.add("active");
+    } else {
+      dot.classList.remove("active");
+    }
+  });
+
+  if (prevBtn) {
+    prevBtn.style.display = currentTutorialStep > 0 ? "inline-flex" : "none";
+  }
+
+  if (nextBtn) {
+    if (currentTutorialStep === TOTAL_TUTORIAL_STEPS - 1) {
+      nextBtn.textContent = "¡Comenzar! ✓";
+    } else {
+      nextBtn.textContent = "Siguiente →";
+    }
+  }
+}
+
+function openTutorial() {
+  const modal = document.getElementById("tutorialModal");
+  if (!modal) return;
+  goToTutorialStep(0);
+  modal.style.display = "flex";
+}
+
+function closeTutorial(markCompleted = true) {
+  const modal = document.getElementById("tutorialModal");
+  if (modal) modal.style.display = "none";
+
+  if (markCompleted && currentUserId) {
+    try {
+      localStorage.setItem(`stab_tutorial_completed_${currentUserId}`, "true");
+    } catch (e) {
+      console.warn("No se pudo guardar estado del tutorial:", e);
+    }
+  }
+}
+
+function checkTutorialWelcome(userId) {
+  if (!userId) return;
+  try {
+    const completed = localStorage.getItem(`stab_tutorial_completed_${userId}`);
+    if (!completed) {
+      setTimeout(() => {
+        openTutorial();
+      }, 700);
+    }
+  } catch (e) {
+    console.warn("Error leyendo localStorage:", e);
+  }
 }

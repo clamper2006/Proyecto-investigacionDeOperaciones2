@@ -91,6 +91,10 @@
     </nav>
 
     <div class="sidebar-footer">
+      <button class="sidebar-footer-btn" id="openTutorialBtnDesktop">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Tutorial</span>
+      </button>
       <button class="sidebar-footer-btn" id="openAboutBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span>Acerca de</span>
@@ -124,7 +128,7 @@
       <div class="header-actions">
         <button class="btn-season" id="seasonToggleBtn" title="Alternar modo estacional">
           <span class="season-dot"></span>
-          <span class="season-label">Estacional</span>
+          <span class="season-label">Activar Modo Estacional</span>
         </button>
 
         <!-- Avatar desktop con badge de usuario -->
@@ -143,6 +147,10 @@
               <span class="user-menu-email" id="userEmailDisplay">usuario@email.com</span>
             </div>
             <div class="user-menu-divider"></div>
+            <button class="user-menu-item" id="openTutorialBtnMobile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Tutorial de Inicio
+            </button>
             <button class="user-menu-item" id="openAboutBtnMobile">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
               Acerca de Stab
@@ -503,7 +511,11 @@
       </div>
 
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="flex-direction: column; gap: 8px;">
+      <button type="button" class="btn btn-ghost" id="openTutorialFromAboutBtn" style="width:100%; border-color: rgba(16,217,160,0.3); color: var(--accent);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span>Ver Tutorial de Inicio</span>
+      </button>
       <button class="btn btn-ghost" id="closeAboutBtn" style="width:100%;">Cerrar</button>
     </div>
   </div>
@@ -521,6 +533,77 @@
   <div class="install-banner-actions">
     <button class="btn btn-ghost" id="installDismiss">Cerrar</button>
     <button class="btn btn-primary" id="installAccept">Instalar</button>
+  </div>
+</div>
+
+<!-- Modal Tutorial de Bienvenida -->
+<div class="modal" id="tutorialModal">
+  <div class="modal-card animate-up tutorial-card">
+    <!-- Indicador de pasos -->
+    <div class="tutorial-progress">
+      <div class="tutorial-step-dot active" data-step="0"></div>
+      <div class="tutorial-step-dot" data-step="1"></div>
+      <div class="tutorial-step-dot" data-step="2"></div>
+      <div class="tutorial-step-dot" data-step="3"></div>
+      <div class="tutorial-step-dot" data-step="4"></div>
+    </div>
+
+    <!-- Contenido de pasos -->
+    <div class="tutorial-body">
+
+      <!-- Paso 0: Bienvenida -->
+      <div class="tutorial-step active" data-step="0">
+        <div class="tutorial-icon">👋</div>
+        <h2>¡Bienvenido a Stab!</h2>
+        <p>Tu sistema de gestión de inventario para <strong>Inversiones Cleer David C.A.</strong></p>
+        <p class="tutorial-hint">Este tutorial te guiará por las funciones principales en menos de un minuto.</p>
+      </div>
+
+      <!-- Paso 1: Dashboard -->
+      <div class="tutorial-step" data-step="1">
+        <div class="tutorial-icon">📊</div>
+        <h2>Dashboard</h2>
+        <p>Aquí verás un resumen visual de tu inventario: productos totales, alertas de stock bajo y sin stock, valor de tu inventario y márgenes.</p>
+        <p class="tutorial-hint">Las tarjetas de colores te alertan de inmediato sobre problemas críticos.</p>
+      </div>
+
+      <!-- Paso 2: Inventario -->
+      <div class="tutorial-step" data-step="2">
+        <div class="tutorial-icon">📦</div>
+        <h2>Gestión de Inventario</h2>
+        <p>Desde la sección <strong>Inventario</strong> puedes añadir, editar y eliminar productos. Cada producto es <strong>exclusivo de tu cuenta</strong> — nadie más puede verlo.</p>
+        <p class="tutorial-hint">Usa el botón <strong>+ Añadir</strong> para registrar tu primer producto.</p>
+      </div>
+
+      <!-- Paso 3: Clasificación ABC -->
+      <div class="tutorial-step" data-step="3">
+        <div class="tutorial-icon">📈</div>
+        <h2>Clasificación ABC</h2>
+        <p>Stab aplica el principio de Pareto para clasificar tus productos automáticamente:</p>
+        <ul class="tutorial-list">
+          <li><span class="abc-class-badge class-a">A</span> 70% del valor — control estricto</li>
+          <li><span class="abc-class-badge class-b">B</span> 20% del valor — control moderado</li>
+          <li><span class="abc-class-badge class-c">C</span> 10% del valor — control simplificado</li>
+        </ul>
+      </div>
+
+      <!-- Paso 4: Modo Estacional -->
+      <div class="tutorial-step" data-step="4">
+        <div class="tutorial-icon">🌡️</div>
+        <h2>Modo Estacional</h2>
+        <p>El botón <strong>"Activar Modo Estacional"</strong> incrementa automáticamente un <strong>40%</strong> los umbrales mínimos y máximos de stock para anticiparte a épocas de alta demanda.</p>
+        <p class="tutorial-hint">¡Todo listo! Puedes volver a ver este tutorial desde <strong>Acerca de</strong>.</p>
+      </div>
+
+    </div>
+
+    <div class="tutorial-footer">
+      <button class="btn btn-ghost" id="tutorialSkipBtn">Omitir</button>
+      <div class="tutorial-nav">
+        <button class="btn btn-ghost tutorial-prev-btn" id="tutorialPrevBtn" style="display:none;">← Anterior</button>
+        <button class="btn btn-primary" id="tutorialNextBtn">Siguiente →</button>
+      </div>
+    </div>
   </div>
 </div>
 

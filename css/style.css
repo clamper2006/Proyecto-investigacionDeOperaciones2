@@ -435,33 +435,50 @@ button, input, select, textarea {
 
 /* ==================== MODO ESTACIONAL ==================== */
 .btn-season {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  background: var(--bg);
-  border: 1px solid var(--border-md);
-  padding: 7px 13px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
+  gap: 8px;
+  background: rgba(245, 158, 11, 0.12);
+  border: 2px solid rgba(245, 158, 11, 0.75);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   white-space: nowrap;
+  color: #fbbf24;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.18);
 }
-.btn-season:hover { border-color: var(--warn); }
+.btn-season:hover {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #f59e0b;
+  box-shadow: 0 0 18px rgba(245, 158, 11, 0.35);
+  transform: translateY(-1px);
+}
+.btn-season:active {
+  transform: translateY(0);
+}
 .season-dot {
-  width: 7px;
-  height: 7px;
-  background: var(--text-3);
+  width: 9px;
+  height: 9px;
+  background: #f59e0b;
   border-radius: 50%;
-  transition: background 0.3s, box-shadow 0.3s;
+  transition: background 0.3s, box-shadow 0.3s, transform 0.3s;
   flex-shrink: 0;
+  box-shadow: 0 0 6px #f59e0b;
+}
+.btn-season.active {
+  background: rgba(16, 217, 160, 0.15);
+  border-color: var(--ok);
+  color: var(--ok);
+  box-shadow: 0 0 18px rgba(16, 217, 160, 0.35);
 }
 .btn-season.active .season-dot {
-  background: var(--warn);
-  box-shadow: 0 0 7px var(--warn);
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+  transform: scale(1.15);
 }
-.btn-season.active { border-color: var(--warn); color: var(--warn); }
 
 /* ==================== VIEWS ==================== */
 .views-wrapper {
@@ -485,12 +502,32 @@ button, input, select, textarea {
   border-radius: var(--r);
   padding: 20px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.12);
-  transition: border-color 0.2s;
+  -webkit-tap-highlight-color: transparent;
 }
-.kpi-card:hover { border-color: var(--border-md); }
-.kpi-card--success { border-left: 3px solid var(--ok); }
-.kpi-card--warn    { border-left: 3px solid var(--warn); }
-.kpi-card--danger  { border-left: 3px solid var(--danger); }
+.kpi-card:hover,
+.kpi-card:active,
+.kpi-card:focus {
+  border-color: var(--border-md);
+}
+/* La franja de color se mantiene fija siempre, incluso al tocar o hacer click */
+.kpi-card--success,
+.kpi-card--success:hover,
+.kpi-card--success:active,
+.kpi-card--success:focus {
+  border-left: 4px solid var(--ok) !important;
+}
+.kpi-card--warn,
+.kpi-card--warn:hover,
+.kpi-card--warn:active,
+.kpi-card--warn:focus {
+  border-left: 4px solid var(--warn) !important;
+}
+.kpi-card--danger,
+.kpi-card--danger:hover,
+.kpi-card--danger:active,
+.kpi-card--danger:focus {
+  border-left: 4px solid var(--danger) !important;
+}
 .kpi-header {
   display: flex;
   justify-content: space-between;
@@ -910,19 +947,27 @@ button, input, select, textarea {
 
   /* Header móvil */
   .header {
-    padding: 12px 16px;
+    padding: 10px 14px;
     background: var(--bg-2);
   }
   .mobile-brand { display: flex; }
   .header-title-area { display: none; }
+  .header-actions { gap: 8px; }
 
   /* Mostrar menú desplegable, ocultar avatar desktop */
   .user-badge { display: none; }
-  .user-menu  { display: block; }
+  .user-menu  { display: block; flex-shrink: 0; }
 
-  /* Ocultar label estacional en móvil pequeño */
-  .season-label { display: none; }
-  .btn-season { padding: 7px 10px; }
+  /* Ajustar btn-season en móvil — texto completo, llamativo y bien enmarcado */
+  .btn-season {
+    padding: 6px 12px;
+    font-size: 11.5px;
+    border-width: 2px;
+    font-weight: 700;
+    gap: 6px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.25);
+  }
 
   /* Views wrapper con padding para bottom nav */
   .views-wrapper { padding: 16px 14px; padding-bottom: calc(var(--bottom-nav-h) + 16px); }
@@ -968,4 +1013,109 @@ button, input, select, textarea {
 @media (max-width: 400px) {
   .kpi-grid { grid-template-columns: 1fr 1fr; }
   .kpi-value { font-size: 22px; }
+}
+
+
+/* ==================== TUTORIAL DE BIENVENIDA ==================== */
+.tutorial-card {
+  max-width: 480px !important;
+  overflow: hidden;
+}
+.tutorial-progress {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 18px 24px 0;
+}
+.tutorial-step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-md);
+  transition: all 0.3s;
+}
+.tutorial-step-dot.active {
+  background: var(--accent);
+  width: 24px;
+  border-radius: 4px;
+}
+.tutorial-body {
+  padding: 24px 28px 16px;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+}
+.tutorial-step {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  animation: tutorialFade 0.3s ease forwards;
+}
+.tutorial-step.active { display: flex; }
+@keyframes tutorialFade {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.tutorial-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  line-height: 1;
+}
+.tutorial-step h2 {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text);
+}
+.tutorial-step p {
+  font-size: 14px;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: 8px;
+  max-width: 380px;
+}
+.tutorial-hint {
+  font-size: 12px !important;
+  color: var(--text-3) !important;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 14px;
+  margin-top: 4px;
+}
+.tutorial-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  text-align: left;
+  width: 100%;
+  max-width: 300px;
+}
+.tutorial-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.tutorial-footer {
+  padding: 14px 24px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+}
+.tutorial-nav {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.tutorial-prev-btn {
+  font-size: 13px;
+  padding: 8px 14px;
 }
