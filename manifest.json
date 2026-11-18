@@ -1,7 +1,7 @@
 {
   "name": "Stab — Gestión de Inventario",
   "short_name": "Stab",
-  "description": "Sistema de gestión de stock e inventario para Inversiones Cleer David C.A. — v2.0.0",
+  "description": "Sistema de gestión de stock e inventario para Inversiones Cleer David C.A. — v2.2.0",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a0e1a",

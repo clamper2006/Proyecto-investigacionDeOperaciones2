@@ -1,19 +1,15 @@
 /* =========================================
-   STAB v2.1.0 — Core Logic & Integration
+   STAB v2.2.0 — Core Logic & Integration
    Inversiones Cleer David C.A. — Gestión de Inventario
    ========================================= */
 
 // ---- CONFIGURACIÓN DE SUPABASE ----
-const SUPABASE_URL = "https://giimknuufvrlgebfsbyz.supabase.co"; 
+const SUPABASE_URL = "https://giimknuufvrlgebfsbyz.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdpaW1rbnV1ZnZybGdlYmZzYnl6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ5Mzc4MzcsImV4cCI6MjExMDUxMzgzN30.wFowxudE2Ix204cjperwyTFTuxzP2xbdCz6Q3NZRU24";
 
 // ---- INICIALIZACIÓN DE SUPABASE ----
 try {
-  // El CDN de Supabase ya creó window.supabase.
   if (typeof window.supabase !== 'undefined') {
-    // Sobrescribimos la variable global directamente con la instancia del cliente.
-    // Al no usar "const" ni "let", evitamos el error de duplicado "already been declared"
-    // y todo tu código que ya usa "supabase" funcionará automáticamente.
     window.supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   } else {
     console.error("El SDK de Supabase no se cargó correctamente desde el CDN.");
@@ -22,15 +18,16 @@ try {
   console.error("Error crítico de inicialización:", err);
 }
 
-// ---- ESTADO GLOBAL DEL SPREADSHEET ----
+// ---- ESTADO GLOBAL ----
 let productsState = [];
 let isSeasonalActive = false;
 let currentEditingProductId = null;
 let productToDeleteId = null;
+let currentUserId = null;
 
 const CATEGORIES = ["Medicamentos", "Insumos Médicos", "Higiene", "Equipos", "Otros"];
 
-// ---- CARGA INICIAL E INICIALIZACIÓN DE COMPONENTES ----
+// ---- CARGA INICIAL ----
 document.addEventListener("DOMContentLoaded", () => {
   initApp();
   registerServiceWorker();
@@ -44,6 +41,7 @@ function initApp() {
   setupFilterHandlers();
   setupSeasonalToggle();
   setupInstallBanner();
+  setupUserMenu();
 }
 
 // Rellenar dinámicamente campos de categoría
@@ -61,22 +59,20 @@ function populateSelectOptions() {
 
 // ---- CONTROL DE AUTENTICACIÓN ----
 function setupAuthListeners() {
-  if (!supabase) {
+  if (!window.supabase) {
     showToast("Error de conexión con la base de datos.", "error");
     return;
   }
 
-  // Comprobar estado de sesión actual al inicio
   supabase.auth.getSession().then(({ data: { session } }) => {
     handleAuthState(session);
   });
 
-  // Escuchar cambios de estado en tiempo real (Inicio/Cierre/Redirects)
   supabase.auth.onAuthStateChange((_event, session) => {
     handleAuthState(session);
   });
 
-  // Evento Login Email/Contraseña convencional
+  // Login Email/Contraseña
   document.getElementById("loginForm").addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("loginEmail").value;
@@ -97,13 +93,11 @@ function setupAuthListeners() {
     }
   });
 
-  
- // Evento Iniciar Sesión con Google (Flujo Depurado)
+  // Login con Google
   document.getElementById("btn-google-login").addEventListener("click", async (e) => {
     e.preventDefault();
     showToast("Redirigiendo a Google...", "info");
 
-    // Eliminamos cualquier caché previa del login antes del redirect
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'BYPASS_AUTH_CACHE' });
     }
@@ -111,12 +105,8 @@ function setupAuthListeners() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        // SOLUCIÓN: Combina el dominio de GitHub con la ruta exacta de tu repositorio
         redirectTo: window.location.origin + window.location.pathname,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent'
-        }
+        queryParams: { access_type: 'offline', prompt: 'consent' }
       }
     });
 
@@ -125,18 +115,24 @@ function setupAuthListeners() {
     }
   });
 
-  // Cierre de Sesión
-  document.getElementById("btnLogout").addEventListener("click", async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      showToast("Error al cerrar sesión", "error");
-    } else {
-      showToast("Sesión cerrada", "info");
-    }
-  });
+  // Cierre de Sesión (sidebar desktop)
+  document.getElementById("btnLogout").addEventListener("click", handleLogout);
+  // Cierre de Sesión (menú desplegable móvil)
+  document.getElementById("btnLogoutMenu").addEventListener("click", handleLogout);
 }
 
-// Actualizar interfaces según sesión del usuario
+async function handleLogout() {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    showToast("Error al cerrar sesión", "error");
+  } else {
+    showToast("Sesión cerrada", "info");
+    currentUserId = null;
+    productsState = [];
+  }
+}
+
+// Actualizar interfaz según estado de sesión
 function handleAuthState(session) {
   const loginScreen = document.getElementById("loginScreen");
   const appShell = document.getElementById("appShell");
@@ -144,12 +140,21 @@ function handleAuthState(session) {
   if (session) {
     loginScreen.style.display = "none";
     appShell.style.display = "flex";
-    
-    // Configurar Badge de usuario
+
+    currentUserId = session.user.id;
     const email = session.user.email;
-    document.getElementById("userAvatar").textContent = email.charAt(0).toUpperCase();
+    const initial = email.charAt(0).toUpperCase();
+
+    // Avatar desktop
+    document.getElementById("userAvatar").textContent = initial;
     document.getElementById("userAvatar").title = email;
 
+    // Avatar y email en menú móvil
+    const mobileAvatar = document.getElementById("userAvatarMobile");
+    if (mobileAvatar) mobileAvatar.textContent = initial;
+    const panelAvatar = document.getElementById("userAvatarMenuPanel");
+    if (panelAvatar) panelAvatar.textContent = initial;
+    document.getElementById("userEmailDisplay").textContent = email;
     loadInventoryData();
   } else {
     loginScreen.style.display = "flex";
@@ -157,12 +162,11 @@ function handleAuthState(session) {
   }
 }
 
-// ---- CARGA Y MANIPULACIÓN DE DATOS DESDE SUPABASE ----
+// ---- CARGA DE DATOS DESDE SUPABASE (filtrado por user_id via RLS) ----
 async function loadInventoryData() {
-  if (!window.supabase) return;
-  const supabase = window.supabase;
+  if (!window.supabase || !currentUserId) return;
 
-  const { data, error } = await supabase
+  const { data, error } = await window.supabase
     .from("products")
     .select("*")
     .order("name", { ascending: true });
@@ -178,58 +182,47 @@ async function loadInventoryData() {
   renderABCTable();
 }
 
-// ---- LÓGICA DEL MODELO ESTACIONAL (MATEMÁTICA EN FRONTEND) ----
+// ---- MODELO ESTACIONAL ----
 function setupSeasonalToggle() {
   const seasonBtn = document.getElementById("seasonToggleBtn");
   seasonBtn.addEventListener("click", () => {
     isSeasonalActive = !isSeasonalActive;
-    
     if (isSeasonalActive) {
       seasonBtn.classList.add("active");
-      showToast("Modo Estacional Activo (+40% de incremento en umbrales de seguridad)", "info");
+      showToast("Modo Estacional Activo (+40% en umbrales de seguridad)", "info");
     } else {
       seasonBtn.classList.remove("active");
-      showToast("Modo Estacional Desactivado (Rango de seguridad base)", "info");
+      showToast("Modo Estacional Desactivado", "info");
     }
-
     renderDashboard();
     renderInventoryTable();
   });
 }
 
-// Retorna los umbrales de stock mínimo/máximo evaluando la estacionalidad
 function getSafetyLimits(product) {
   let min = Number(product.min_stock);
   let max = Number(product.max_stock);
-
   if (isSeasonalActive) {
-    // Incremento estacional de resguardo del 40% (ej: períodos de alta demanda médica)
     min = Math.ceil(min * 1.4);
     max = Math.ceil(max * 1.4);
   }
-
   return { min, max };
 }
 
-// Clasificación de Alertas del Producto
 function getStockAlertState(stock, limits) {
   if (stock <= 0) return { label: "Sin Stock", class: "badge-danger", code: "empty" };
   if (stock < limits.min) return { label: "Stock Bajo", class: "badge-warn", code: "low" };
   return { label: "Normal", class: "badge-success", code: "normal" };
 }
 
-// ---- RENDERS DE VISTA ----
+// ---- RENDERS ----
 
 // 1. DASHBOARD
 function renderDashboard() {
   let totalProducts = productsState.length;
-  let normalCount = 0;
-  let lowCount = 0;
-  let emptyCount = 0;
-  let totalInventoryValue = 0;
-  let totalCostValue = 0;
-  let totalMarginPctSum = 0;
-  let productsWithMargin = 0;
+  let normalCount = 0, lowCount = 0, emptyCount = 0;
+  let totalInventoryValue = 0, totalCostValue = 0;
+  let totalMarginPctSum = 0, productsWithMargin = 0;
 
   const alertsTableBody = document.getElementById("criticalAlertsTable");
   alertsTableBody.innerHTML = "";
@@ -241,34 +234,24 @@ function renderDashboard() {
     const limits = getSafetyLimits(prod);
     const alertState = getStockAlertState(stock, limits);
 
-    // Contadores de KPIs
     if (alertState.code === "normal") normalCount++;
-    else if (alertState.code === "low") {
-      lowCount++;
-      addAlertRow(alertsTableBody, prod, stock, alertState);
-    } else if (alertState.code === "empty") {
-      emptyCount++;
-      addAlertRow(alertsTableBody, prod, stock, alertState);
-    }
+    else if (alertState.code === "low") { lowCount++; addAlertRow(alertsTableBody, prod, stock, alertState); }
+    else if (alertState.code === "empty") { emptyCount++; addAlertRow(alertsTableBody, prod, stock, alertState); }
 
-    // Cálculos de Operaciones
     totalInventoryValue += stock * price;
     totalCostValue += stock * cost;
 
     if (cost > 0) {
-      const margin = ((price - cost) / cost) * 100;
-      totalMarginPctSum += margin;
+      totalMarginPctSum += ((price - cost) / cost) * 100;
       productsWithMargin++;
     }
   });
 
-  // Actualizar UI del Dashboard
   document.getElementById("kpiTotal").textContent = totalProducts;
   document.getElementById("kpiNormal").textContent = normalCount;
   document.getElementById("kpiLow").textContent = lowCount;
   document.getElementById("kpiEmpty").textContent = emptyCount;
   document.getElementById("alertCount").textContent = lowCount + emptyCount;
-
   document.getElementById("totalInventoryValue").textContent = formatCurrency(totalInventoryValue);
   document.getElementById("totalCostValue").textContent = formatCurrency(totalCostValue);
 
@@ -288,7 +271,7 @@ function addAlertRow(tableBody, prod, stock, alertState) {
   tableBody.insertAdjacentHTML("beforeend", row);
 }
 
-// 2. INVENTARIO (LISTADO & FILTROS)
+// 2. INVENTARIO
 function renderInventoryTable() {
   const tableBody = document.getElementById("inventoryTableBody");
   const searchQuery = document.getElementById("searchInput").value.toLowerCase();
@@ -301,19 +284,15 @@ function renderInventoryTable() {
   let filtered = productsState.filter(prod => {
     const limits = getSafetyLimits(prod);
     const alertState = getStockAlertState(Number(prod.stock), limits);
-    
     const matchesSearch = prod.name.toLowerCase().includes(searchQuery);
     const matchesCategory = categoryFilter === "Todos" || prod.category === categoryFilter;
-    
     let matchesStock = true;
     if (stockFilter === "Normal") matchesStock = alertState.code === "normal";
     else if (stockFilter === "Bajo") matchesStock = alertState.code === "low";
     else if (stockFilter === "Sin Stock") matchesStock = alertState.code === "empty";
-
     return matchesSearch && matchesCategory && matchesStock;
   });
 
-  // Métodos de Ordenación
   filtered.sort((a, b) => {
     if (sortOption === "name-asc") return a.name.localeCompare(b.name);
     if (sortOption === "name-desc") return b.name.localeCompare(a.name);
@@ -323,19 +302,29 @@ function renderInventoryTable() {
     return 0;
   });
 
+  if (filtered.length === 0) {
+    tableBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text-3);">No se encontraron productos</td></tr>`;
+    return;
+  }
+
   filtered.forEach(prod => {
     const limits = getSafetyLimits(prod);
+    const alertState = getStockAlertState(Number(prod.stock), limits);
     const row = `
       <tr>
         <td><strong>${prod.name}</strong></td>
         <td>${prod.category}</td>
-        <td>${prod.stock} ${prod.unit}</td>
+        <td><span class="badge ${alertState.class}">${prod.stock} ${prod.unit}</span></td>
         <td>${limits.min} / ${limits.max}</td>
         <td>${formatCurrency(prod.price)}</td>
         <td>${formatCurrency(prod.cost_price)}</td>
-        <td>
-          <button class="btn btn-ghost" style="padding: 4px 8px;" onclick="editProduct('${prod.id}')">✏️</button>
-          <button class="btn btn-ghost" style="padding: 4px 8px; color:#ef4444;" onclick="openDeleteConfirm('${prod.id}')">🗑️</button>
+        <td class="actions-cell">
+          <button class="btn-icon btn-icon-edit" onclick="editProduct('${prod.id}')" title="Editar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="btn-icon btn-icon-delete" onclick="openDeleteConfirm('${prod.id}')" title="Eliminar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+          </button>
         </td>
       </tr>
     `;
@@ -343,12 +332,11 @@ function renderInventoryTable() {
   });
 }
 
-// 3. TABLA DE ANÁLISIS ABC (ANÁLISIS DE PARETO)
+// 3. ANÁLISIS ABC
 function renderABCTable() {
   const tableBody = document.getElementById("abcTableBody");
   tableBody.innerHTML = "";
 
-  // 1. Calcular el valor de inversión total por artículo
   let abcList = productsState.map(prod => {
     const stock = Number(prod.stock);
     const cost = Number(prod.cost_price);
@@ -356,36 +344,22 @@ function renderABCTable() {
     return { ...prod, totalValue };
   });
 
-  // 2. Ordenar de mayor a menor valor
   abcList.sort((a, b) => b.totalValue - a.totalValue);
 
   const grandTotalInvestment = abcList.reduce((acc, curr) => acc + curr.totalValue, 0);
 
   let runningTotal = 0;
-  let totalA = 0;
-  let totalB = 0;
-  let totalC = 0;
+  let totalA = 0, totalB = 0, totalC = 0;
 
   abcList.forEach(prod => {
     runningTotal += prod.totalValue;
     const sharePct = grandTotalInvestment > 0 ? (prod.totalValue / grandTotalInvestment) * 100 : 0;
     const cumPct = grandTotalInvestment > 0 ? (runningTotal / grandTotalInvestment) * 100 : 0;
 
-    // Asignación de clases basada en el Principio de Pareto (70% - 20% - 10%)
-    let abcClass = "C";
-    let badgeClass = "class-c";
-
-    if (cumPct <= 70) {
-      abcClass = "A";
-      badgeClass = "class-a";
-      totalA += prod.totalValue;
-    } else if (cumPct <= 90) {
-      abcClass = "B";
-      badgeClass = "class-b";
-      totalB += prod.totalValue;
-    } else {
-      totalC += prod.totalValue;
-    }
+    let abcClass = "C", badgeClass = "class-c";
+    if (cumPct <= 70) { abcClass = "A"; badgeClass = "class-a"; totalA += prod.totalValue; }
+    else if (cumPct <= 90) { abcClass = "B"; badgeClass = "class-b"; totalB += prod.totalValue; }
+    else { totalC += prod.totalValue; }
 
     const row = `
       <tr>
@@ -401,13 +375,12 @@ function renderABCTable() {
     tableBody.insertAdjacentHTML("beforeend", row);
   });
 
-  // Renderizar Tarjetas Resumen ABC
   document.getElementById("abcTotalA").textContent = formatCurrency(totalA);
   document.getElementById("abcTotalB").textContent = formatCurrency(totalB);
   document.getElementById("abcTotalC").textContent = formatCurrency(totalC);
 }
 
-// ---- CONTROLADORES DE FILTROS & BÚSQUEDA ----
+// ---- FILTROS ----
 function setupFilterHandlers() {
   document.getElementById("searchInput").addEventListener("input", renderInventoryTable);
   document.getElementById("categoryFilter").addEventListener("change", renderInventoryTable);
@@ -415,12 +388,11 @@ function setupFilterHandlers() {
   document.getElementById("sortSelect").addEventListener("change", renderInventoryTable);
 }
 
-// ---- GESTIÓN DE Prodcuto MODAL (AÑADIR / EDITAR) ----
+// ---- GESTIÓN DE PRODUCTO MODAL ----
 function setupFormHandlers() {
   const modal = document.getElementById("productModal");
   const form = document.getElementById("productForm");
 
-  // Abrir Modal Agregar
   document.getElementById("openAddProductBtn").addEventListener("click", () => {
     currentEditingProductId = null;
     form.reset();
@@ -428,29 +400,31 @@ function setupFormHandlers() {
     modal.style.display = "flex";
   });
 
-  // Cerrar Modales
   document.getElementById("closeProductModalBtn").addEventListener("click", () => modal.style.display = "none");
   document.getElementById("cancelProductBtn").addEventListener("click", () => modal.style.display = "none");
 
-  // Guardar datos en Supabase
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const saveBtn = document.getElementById("saveProductBtn");
+    saveBtn.disabled = true;
+    saveBtn.textContent = "Guardando...";
 
+    // CRÍTICO: siempre incluir user_id del usuario actual
     const payload = {
-      name: document.getElementById("prodName").value,
+      name: document.getElementById("prodName").value.trim(),
       category: document.getElementById("prodCategory").value,
-      unit: document.getElementById("prodUnit").value,
+      unit: document.getElementById("prodUnit").value.trim(),
       stock: Number(document.getElementById("prodStock").value),
       min_stock: Number(document.getElementById("prodMinStock").value),
       max_stock: Number(document.getElementById("prodMaxStock").value),
       price: parseFloat(document.getElementById("prodPrice").value),
       cost_price: parseFloat(document.getElementById("prodCostPrice").value),
-      notes: document.getElementById("prodNotes").value
+      notes: document.getElementById("prodNotes").value,
+      user_id: currentUserId   // Vincula el producto al usuario actual
     };
 
     if (currentEditingProductId) {
-      // Actualizar registro existente
-      const { error } = await supabase
+      const { error } = await window.supabase
         .from("products")
         .update(payload)
         .eq("id", currentEditingProductId);
@@ -462,8 +436,7 @@ function setupFormHandlers() {
         loadInventoryData();
       }
     } else {
-      // Insertar nuevo registro
-      const { error } = await supabase
+      const { error } = await window.supabase
         .from("products")
         .insert([payload]);
 
@@ -474,16 +447,18 @@ function setupFormHandlers() {
         loadInventoryData();
       }
     }
+
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Guardar Producto";
   });
 
-  // Modal confirmación de borrado
   document.getElementById("cancelDeleteBtn").addEventListener("click", () => {
     document.getElementById("confirmModal").style.display = "none";
   });
 
   document.getElementById("confirmDeleteBtn").addEventListener("click", async () => {
     if (productToDeleteId) {
-      const { error } = await supabase
+      const { error } = await window.supabase
         .from("products")
         .delete()
         .eq("id", productToDeleteId);
@@ -498,14 +473,11 @@ function setupFormHandlers() {
   });
 }
 
-// Disparadores Globales para Edición y Borrado
 window.editProduct = function(id) {
   const prod = productsState.find(p => p.id === id);
   if (!prod) return;
-
   currentEditingProductId = prod.id;
   document.getElementById("modalTitle").textContent = "Editar Producto";
-  
   document.getElementById("prodName").value = prod.name;
   document.getElementById("prodCategory").value = prod.category;
   document.getElementById("prodUnit").value = prod.unit;
@@ -515,7 +487,6 @@ window.editProduct = function(id) {
   document.getElementById("prodPrice").value = prod.price;
   document.getElementById("prodCostPrice").value = prod.cost_price;
   document.getElementById("prodNotes").value = prod.notes || "";
-
   document.getElementById("productModal").style.display = "flex";
 };
 
@@ -524,9 +495,10 @@ window.openDeleteConfirm = function(id) {
   document.getElementById("confirmModal").style.display = "flex";
 };
 
-// ---- SISTEMA DE NAVEGACIÓN ENTRE VISTAS ----
+// ---- NAVEGACIÓN ----
 function setupNavigation() {
-  const navItems = document.querySelectorAll(".nav-item");
+  // Todos los elementos de navegación: sidebar (desktop) + bottom nav (móvil)
+  const allNavItems = document.querySelectorAll(".nav-item, .bottom-nav-item");
   const views = document.querySelectorAll(".view");
 
   const titles = {
@@ -535,55 +507,86 @@ function setupNavigation() {
     abc: { title: "Clasificación ABC", subtitle: "Optimización de stock por volumen y costo de inversión" }
   };
 
-  navItems.forEach(item => {
+  function activateView(viewName) {
+    // Desactivar todos los items de nav (sidebar + bottom nav)
+    allNavItems.forEach(n => n.classList.remove("active"));
+    views.forEach(v => v.classList.remove("active"));
+
+    // Activar el item correspondiente en ambas navs
+    document.querySelectorAll(`[data-view="${viewName}"]`).forEach(el => el.classList.add("active"));
+    document.getElementById(`${viewName}View`).classList.add("active");
+    document.getElementById("viewTitle").textContent = titles[viewName].title;
+    document.getElementById("viewSubtitle").textContent = titles[viewName].subtitle;
+
+    // En móvil, hacer scroll al top de las vistas
+    const wrapper = document.querySelector(".views-wrapper");
+    if (wrapper) wrapper.scrollTop = 0;
+  }
+
+  allNavItems.forEach(item => {
     item.addEventListener("click", (e) => {
       e.preventDefault();
-      const viewName = item.getAttribute("data-view");
-
-      navItems.forEach(n => n.classList.remove("active"));
-      views.forEach(v => v.classList.remove("active"));
-
-      item.classList.add("active");
-      document.getElementById(`${viewName}View`).classList.add("active");
-
-      // Actualizar Encabezado Dinámico
-      document.getElementById("viewTitle").textContent = titles[viewName].title;
-      document.getElementById("viewSubtitle").textContent = titles[viewName].subtitle;
+      activateView(item.getAttribute("data-view"));
     });
   });
 
-  // Inicializar cabecera del Dashboard activo al inicio
-  document.getElementById("viewTitle").textContent = titles.dashboard.title;
-  document.getElementById("viewSubtitle").textContent = titles.dashboard.subtitle;
+  activateView("dashboard");
 
-  // Lógica del modal "Acerca De"
+  // Modal "Acerca De"
   const aboutModal = document.getElementById("aboutModal");
   document.getElementById("openAboutBtn").addEventListener("click", () => aboutModal.style.display = "flex");
   document.getElementById("closeAboutModalBtn").addEventListener("click", () => aboutModal.style.display = "none");
   document.getElementById("closeAboutBtn").addEventListener("click", () => aboutModal.style.display = "none");
 }
 
-// ---- TOASTS DINÁMICOS ----
+// ---- MENÚ DE USUARIO (MÓVIL) ----
+function setupUserMenu() {
+  const trigger = document.getElementById("userAvatarMobile");
+  const userDropdown = document.getElementById("userDropdown");
+
+  if (!trigger || !userDropdown) return;
+
+  trigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    userDropdown.classList.toggle("open");
+  });
+
+  document.addEventListener("click", () => {
+    userDropdown.classList.remove("open");
+  });
+
+  userDropdown.addEventListener("click", (e) => {
+    e.stopPropagation();
+  });
+
+  // "Acerca de" desde el menú desplegable móvil
+  document.getElementById("openAboutBtnMobile").addEventListener("click", () => {
+    userDropdown.classList.remove("open");
+    document.getElementById("aboutModal").style.display = "flex";
+  });
+}
+
+// ---- TOASTS ----
 function showToast(message, type = "success") {
   const container = document.getElementById("toastContainer");
   const toast = document.createElement("div");
   toast.className = `toast toast-${type}`;
-  
-  let icon = "✓";
-  if (type === "error") icon = "🚨";
-  if (type === "info") icon = "ℹ️";
 
-  toast.innerHTML = `<span>${icon}</span> <span>${message}</span>`;
+  let icon = "✓";
+  if (type === "error") icon = "✕";
+  if (type === "info") icon = "ℹ";
+
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${message}</span>`;
   container.appendChild(toast);
 
   setTimeout(() => {
     toast.style.opacity = '0';
-    toast.style.transform = 'translateY(-10px)';
+    toast.style.transform = 'translateY(-8px)';
     setTimeout(() => toast.remove(), 300);
   }, 4000);
 }
 
-// ---- FORMATEADORES AUXILIARES ----
+// ---- FORMATEO ----
 function formatCurrency(value) {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -591,14 +594,14 @@ function formatCurrency(value) {
   }).format(value);
 }
 
-// ---- REGISTRO DE SERVICE WORKER Y PWA ----
+// ---- SERVICE WORKER & PWA ----
 let deferredPrompt = null;
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js")
-      .then(() => console.log("Service Worker Stab v2.1.0 registrado exitosamente"))
-      .catch(err => console.error("Fallo de registro del Service Worker:", err));
+      .then(() => console.log("Service Worker Stab v2.2.0 registrado"))
+      .catch(err => console.error("Error Service Worker:", err));
   }
 }
 
@@ -613,15 +616,13 @@ function setupInstallBanner() {
     banner.classList.add("visible");
   });
 
-  dismissBtn.addEventListener("click", () => {
-    banner.classList.remove("visible");
-  });
+  dismissBtn.addEventListener("click", () => banner.classList.remove("visible"));
 
   acceptBtn.addEventListener("click", async () => {
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      console.log(`Elección del usuario de instalación: ${outcome}`);
+      console.log(`Instalación: ${outcome}`);
       deferredPrompt = null;
       banner.classList.remove("visible");
     }

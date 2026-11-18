@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0a0e1a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="description" content="Stab v2.1.0 — Sistema de gestión de stock para Inversiones Cleer David C.A. con Supabase" />
+  <meta name="description" content="Stab v2.2.0 — Sistema de gestión de stock para Inversiones Cleer David C.A. con Supabase" />
   <title>Stab — Inventario</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
@@ -18,6 +18,7 @@
 </head>
 <body>
 
+<!-- ==================== LOGIN ==================== -->
 <div class="login-screen" id="loginScreen" style="display: flex;">
   <div class="login-card animate-up">
     <div class="login-header">
@@ -30,7 +31,7 @@
       <h1>Bienvenido de nuevo</h1>
       <p>Inversiones Cleer David C.A.</p>
     </div>
-    
+
     <form id="loginForm">
       <div class="form-group">
         <label for="loginEmail">Correo Electrónico</label>
@@ -45,9 +46,7 @@
       </button>
     </form>
 
-    <div class="login-separator">
-      <span>o continuar con</span>
-    </div>
+    <div class="login-separator"><span>o continuar con</span></div>
 
     <button id="btn-google-login" class="google-btn">
       <svg class="google-icon" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -61,8 +60,10 @@
   </div>
 </div>
 
+<!-- ==================== APP SHELL ==================== -->
 <div class="app-shell" id="appShell" style="display: none;">
 
+  <!-- SIDEBAR DESKTOP -->
   <aside class="sidebar">
     <div class="brand">
       <div class="logo">
@@ -71,91 +72,130 @@
         </svg>
         <span>Stab</span>
       </div>
-      <span class="version-tag">v2.1.0</span>
+      <span class="version-tag">v2.2.0</span>
     </div>
-    
+
     <nav class="nav-menu">
-      <a href="#" class="nav-item active" data-view="dashboard" id="navDashboard">
+      <a href="#" class="nav-item active" data-view="dashboard">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
         <span>Dashboard</span>
       </a>
-      <a href="#" class="nav-item" data-view="inventory" id="navInventory">
+      <a href="#" class="nav-item" data-view="inventory">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
         <span>Inventario</span>
       </a>
-      <a href="#" class="nav-item" data-view="abc" id="navABC">
+      <a href="#" class="nav-item" data-view="abc">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
         <span>Clasificación ABC</span>
       </a>
     </nav>
-    
+
     <div class="sidebar-footer">
-      <button class="btn btn-ghost btn-block" id="openAboutBtn">
+      <button class="sidebar-footer-btn" id="openAboutBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         <span>Acerca de</span>
       </button>
-      <button class="btn btn-ghost btn-block" id="btnLogout" style="color: #ef4444; margin-top: 8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+      <button class="sidebar-footer-btn sidebar-footer-btn--danger" id="btnLogout">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
         <span>Cerrar Sesión</span>
       </button>
     </div>
   </aside>
 
+  <!-- MAIN CONTENT -->
   <main class="main-content">
+
+    <!-- HEADER -->
     <header class="header">
-      <div class="header-title-area">
-        <h1 id="viewTitle">Cargando...</h1>
-        <p class="text-muted" id="viewSubtitle">Espere un momento</p>
+      <div class="header-left">
+        <!-- Logo solo visible en móvil -->
+        <div class="mobile-brand">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Stab</span>
+        </div>
+        <div class="header-title-area">
+          <h1 id="viewTitle">Cargando...</h1>
+          <p class="text-muted" id="viewSubtitle">Espere un momento</p>
+        </div>
       </div>
+
       <div class="header-actions">
-        <button class="btn-season" id="seasonToggleBtn" title="Alternar factor de demanda estacional">
+        <button class="btn-season" id="seasonToggleBtn" title="Alternar modo estacional">
           <span class="season-dot"></span>
-          <span class="season-label">Modo Estacional</span>
+          <span class="season-label">Estacional</span>
         </button>
+
+        <!-- Avatar desktop con badge de usuario -->
         <div class="user-badge" id="userBadgeArea">
           <div class="user-avatar" id="userAvatar">U</div>
+        </div>
+
+        <!-- Menú desplegable móvil -->
+        <div class="user-menu" id="userDropdown">
+          <button class="user-menu-trigger" id="userAvatarMobile" aria-label="Menú de usuario">
+            <div class="user-avatar-mobile" id="userAvatarMobileIcon">U</div>
+          </button>
+          <div class="user-menu-panel">
+            <div class="user-menu-info">
+              <div class="user-menu-avatar" id="userAvatarMenuPanel">U</div>
+              <span class="user-menu-email" id="userEmailDisplay">usuario@email.com</span>
+            </div>
+            <div class="user-menu-divider"></div>
+            <button class="user-menu-item" id="openAboutBtnMobile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              Acerca de Stab
+            </button>
+            <button class="user-menu-item user-menu-item--danger" id="btnLogoutMenu">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+              Cerrar Sesión
+            </button>
+          </div>
         </div>
       </div>
     </header>
 
+    <!-- VISTAS -->
     <div class="views-wrapper">
-      
+
+      <!-- DASHBOARD -->
       <section class="view active" id="dashboardView">
         <div class="kpi-grid">
           <div class="kpi-card">
             <div class="kpi-header">
               <span class="kpi-title">Productos Totales</span>
-              <span class="kpi-icon text-accent">📦</span>
+              <span class="kpi-icon">📦</span>
             </div>
             <div class="kpi-value" id="kpiTotal">0</div>
           </div>
-          <div class="kpi-card">
+          <div class="kpi-card kpi-card--success">
             <div class="kpi-header">
               <span class="kpi-title">Stock Normal</span>
               <span class="kpi-icon text-success">✓</span>
             </div>
-            <div class="kpi-value" id="kpiNormal">0</div>
+            <div class="kpi-value text-success" id="kpiNormal">0</div>
           </div>
-          <div class="kpi-card">
+          <div class="kpi-card kpi-card--warn">
             <div class="kpi-header">
               <span class="kpi-title">Stock Bajo</span>
               <span class="kpi-icon text-warn">⚠️</span>
             </div>
-            <div class="kpi-value" id="kpiLow">0</div>
+            <div class="kpi-value text-warn" id="kpiLow">0</div>
           </div>
-          <div class="kpi-card">
+          <div class="kpi-card kpi-card--danger">
             <div class="kpi-header">
               <span class="kpi-title">Sin Stock</span>
               <span class="kpi-icon text-danger">🚨</span>
             </div>
-            <div class="kpi-value" id="kpiEmpty">0</div>
+            <div class="kpi-value text-danger" id="kpiEmpty">0</div>
           </div>
         </div>
 
         <div class="dashboard-sections">
           <div class="panel list-panel">
             <div class="panel-header">
-              <h2>Alertas Críticas de Stock</h2>
+              <h2>Alertas Críticas</h2>
               <span class="badge badge-danger" id="alertCount">0</span>
             </div>
             <div class="table-container">
@@ -168,12 +208,11 @@
                     <th>Estado</th>
                   </tr>
                 </thead>
-                <tbody id="criticalAlertsTable">
-                </tbody>
+                <tbody id="criticalAlertsTable"></tbody>
               </table>
             </div>
           </div>
-          
+
           <div class="panel stats-panel">
             <h2>Resumen de Operaciones</h2>
             <div class="stats-list">
@@ -194,10 +233,11 @@
         </div>
       </section>
 
+      <!-- INVENTARIO -->
       <section class="view" id="inventoryView">
         <div class="controls-panel">
           <div class="search-box">
-            <input type="text" id="searchInput" placeholder="Buscar producto por nombre..." />
+            <input type="text" id="searchInput" placeholder="Buscar producto..." />
           </div>
           <div class="filter-group">
             <select id="categoryFilter">
@@ -212,12 +252,15 @@
             <select id="sortSelect">
               <option value="name-asc">Nombre (A-Z)</option>
               <option value="name-desc">Nombre (Z-A)</option>
-              <option value="stock-asc">Stock (Menor a Mayor)</option>
-              <option value="stock-desc">Stock (Mayor a Menor)</option>
-              <option value="price-desc">Precio (Mayor a Menor)</option>
+              <option value="stock-asc">Stock (↑)</option>
+              <option value="stock-desc">Stock (↓)</option>
+              <option value="price-desc">Precio (↓)</option>
             </select>
           </div>
-          <button class="btn btn-primary" id="openAddProductBtn">+ Añadir</button>
+          <button class="btn btn-primary" id="openAddProductBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Añadir
+          </button>
         </div>
 
         <div class="panel table-panel">
@@ -227,35 +270,35 @@
                 <tr>
                   <th>Nombre</th>
                   <th>Categoría</th>
-                  <th>Stock Actual</th>
-                  <th>Rango Seguro (Mín / Máx)</th>
+                  <th>Stock</th>
+                  <th>Rango (Mín/Máx)</th>
                   <th>Precio Venta</th>
                   <th>Precio Costo</th>
                   <th>Acciones</th>
                 </tr>
               </thead>
-              <tbody id="inventoryTableBody">
-              </tbody>
+              <tbody id="inventoryTableBody"></tbody>
             </table>
           </div>
         </div>
       </section>
 
+      <!-- ABC -->
       <section class="view" id="abcView">
         <div class="abc-cards">
           <div class="abc-summary-card val-a">
             <span class="abc-class-badge class-a">Clase A</span>
-            <p class="abc-card-desc">70% del valor total de inversión acumulada. Productos críticos que requieren control estricto.</p>
+            <p class="abc-card-desc">70% del valor total de inversión. Productos críticos — control estricto.</p>
             <div class="abc-card-value" id="abcTotalA">$0.00</div>
           </div>
           <div class="abc-summary-card val-b">
             <span class="abc-class-badge class-b">Clase B</span>
-            <p class="abc-card-desc">20% de la inversión. Artículos con importancia media y control moderado.</p>
+            <p class="abc-card-desc">20% de la inversión. Importancia media — control moderado.</p>
             <div class="abc-card-value" id="abcTotalB">$0.00</div>
           </div>
           <div class="abc-summary-card val-c">
             <span class="abc-class-badge class-c">Clase C</span>
-            <p class="abc-card-desc">10% de la inversión restante. Control simplificado, alta disponibilidad con bajo riesgo financiero.</p>
+            <p class="abc-card-desc">10% restante. Control simplificado, bajo riesgo financiero.</p>
             <div class="abc-card-value" id="abcTotalC">$0.00</div>
           </div>
         </div>
@@ -271,23 +314,42 @@
                   <th>Clase</th>
                   <th>Producto</th>
                   <th>Stock</th>
-                  <th>Precio</th>
+                  <th>Precio Costo</th>
                   <th>Valor Acumulado</th>
                   <th>% Participación</th>
                   <th>% Acumulado</th>
                 </tr>
               </thead>
-              <tbody id="abcTableBody">
-              </tbody>
+              <tbody id="abcTableBody"></tbody>
             </table>
           </div>
         </div>
       </section>
 
-    </div>
+    </div><!-- /views-wrapper -->
   </main>
-</div>
 
+  <!-- BOTTOM NAV (SOLO MÓVIL) -->
+  <nav class="bottom-nav">
+    <a href="#" class="bottom-nav-item active" data-view="dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+      <span>Dashboard</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-view="inventory">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      <span>Inventario</span>
+    </a>
+    <a href="#" class="bottom-nav-item" data-view="abc">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      <span>ABC</span>
+    </a>
+  </nav>
+
+</div><!-- /app-shell -->
+
+<!-- ==================== MODALES ==================== -->
+
+<!-- Modal Producto -->
 <div class="modal" id="productModal">
   <div class="modal-card animate-up">
     <div class="modal-header">
@@ -307,7 +369,7 @@
           </div>
           <div class="form-group">
             <label for="prodUnit">Unidad *</label>
-            <input type="text" id="prodUnit" required placeholder="Ej: Cajas, Bultos, Kg">
+            <input type="text" id="prodUnit" required placeholder="Ej: Cajas, Kg">
           </div>
         </div>
         <div class="form-row">
@@ -316,7 +378,7 @@
             <input type="number" id="prodStock" required min="0" value="0">
           </div>
           <div class="form-group">
-            <label for="prodMinStock">Stock Mínimo (Alerta) *</label>
+            <label for="prodMinStock">Stock Mínimo *</label>
             <input type="number" id="prodMinStock" required min="1" value="5">
           </div>
           <div class="form-group">
@@ -336,7 +398,7 @@
         </div>
         <div class="form-group">
           <label for="prodNotes">Notas u Observaciones</label>
-          <textarea id="prodNotes" rows="3" placeholder="Ubicación en estantería, lote o alertas del producto..."></textarea>
+          <textarea id="prodNotes" rows="3" placeholder="Ubicación, lote, alertas..."></textarea>
         </div>
       </div>
       <div class="modal-footer">
@@ -347,39 +409,99 @@
   </div>
 </div>
 
+<!-- Modal Confirmación Borrado -->
 <div class="modal" id="confirmModal">
   <div class="modal-card animate-up" style="max-width: 400px;">
     <div class="modal-header">
       <h2>¿Eliminar Producto?</h2>
     </div>
     <div class="modal-body">
-      <p>Esta acción no se puede deshacer. Se eliminará el registro de la base de datos de Supabase.</p>
+      <p style="color:var(--text-2); line-height:1.6;">Esta acción no se puede deshacer. El registro será eliminado permanentemente de la base de datos.</p>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" id="cancelDeleteBtn">Cancelar</button>
-      <button class="btn btn-primary" id="confirmDeleteBtn" style="background-color: #ef4444;">Eliminar</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
     </div>
   </div>
 </div>
 
+<!-- Modal Acerca De -->
 <div class="modal" id="aboutModal">
-  <div class="modal-card animate-up" style="max-width: 450px;">
+  <div class="modal-card animate-up" style="max-width: 460px;">
     <div class="modal-header">
       <h2>Sobre el Sistema</h2>
       <button class="modal-close" id="closeAboutModalBtn">&times;</button>
     </div>
     <div class="modal-body">
-      <p style="margin-bottom: 15px; line-height: 1.5;">
-        <strong>Stab</strong> es un ecosistema avanzado de gestión de inventarios para 
-        <em>Inversiones Cleer David C.A.</em> que integra un modelo matemático estacional y categorización ABC 
-        para optimizar los flujos de abastecimiento.
-      </p>
-      <div class="about-meta">
-        <div class="about-meta-row"><span class="about-meta-key">Versión</span><span class="about-meta-val text-accent">2.1.0-Supabase</span></div>
-        <div class="about-meta-row"><span class="about-meta-key">Estructura</span><span class="about-meta-val">Progressive Web App (PWA)</span></div>
-        <div class="about-meta-row"><span class="about-meta-key">Base de datos</span><span class="about-meta-val">PostgreSQL (Supabase)</span></div>
-        <div class="about-meta-row"><span class="about-meta-key">Estado</span><span class="about-meta-val text-accent">✓ Sincronizado</span></div>
+
+      <!-- Card principal de versión -->
+      <div class="about-version-card">
+        <div class="about-logo">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="28" height="28">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>Stab</span>
+        </div>
+        <span class="about-version-badge">v2.2.0</span>
+        <p class="about-tagline">Sistema de Gestión de Inventario</p>
       </div>
+
+      <p class="about-description">
+        <strong>Stab</strong> es un ecosistema avanzado de gestión de inventarios para
+        <em>Inversiones Cleer David C.A.</em> Integra un modelo matemático estacional y
+        categorización ABC para optimizar flujos de abastecimiento.
+      </p>
+
+      <div class="about-meta">
+        <div class="about-meta-row">
+          <span class="about-meta-key">Versión</span>
+          <span class="about-meta-val text-accent">2.2.0</span>
+        </div>
+        <div class="about-meta-row">
+          <span class="about-meta-key">Estructura</span>
+          <span class="about-meta-val">Progressive Web App (PWA)</span>
+        </div>
+        <div class="about-meta-row">
+          <span class="about-meta-key">Base de datos</span>
+          <span class="about-meta-val">PostgreSQL (Supabase)</span>
+        </div>
+        <div class="about-meta-row">
+          <span class="about-meta-key">Autenticación</span>
+          <span class="about-meta-val">Supabase Auth + Google OAuth</span>
+        </div>
+        <div class="about-meta-row">
+          <span class="about-meta-key">Estado</span>
+          <span class="about-meta-val text-accent">✓ Inventario por usuario (RLS)</span>
+        </div>
+      </div>
+
+      <!-- Equipo de desarrollo -->
+      <div class="about-team">
+        <h3 class="about-team-title">Equipo de Desarrollo</h3>
+        <div class="about-team-grid">
+          <div class="team-member">
+            <div class="team-avatar">JL</div>
+            <span>Jaimar Lopez</span>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar">CL</div>
+            <span>Cesar Lamper</span>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar">JL</div>
+            <span>Jesus Lopez</span>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar">SA</div>
+            <span>Soralwis Avilez</span>
+          </div>
+          <div class="team-member">
+            <div class="team-avatar">JF</div>
+            <span>Jesus Figuera</span>
+          </div>
+        </div>
+      </div>
+
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" id="closeAboutBtn" style="width:100%;">Cerrar</button>
@@ -387,16 +509,18 @@
   </div>
 </div>
 
+<!-- Toast Container -->
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- Install Banner -->
 <div class="install-banner" id="installBanner">
   <div class="install-banner-text">
     <strong>Instalar Stab</strong><br>
     Añade la app a tu pantalla de inicio para usarla sin conexión.
   </div>
   <div class="install-banner-actions">
-    <button class="btn btn-ghost" id="installDismiss" style="padding:8px 12px; font-size:12px;">Cerrar</button>
-    <button class="btn btn-primary" id="installAccept" style="padding:8px 16px; font-size:12px;">Instalar</button>
+    <button class="btn btn-ghost" id="installDismiss">Cerrar</button>
+    <button class="btn btn-primary" id="installAccept">Instalar</button>
   </div>
 </div>
 
