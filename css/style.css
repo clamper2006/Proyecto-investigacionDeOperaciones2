@@ -996,6 +996,9 @@ button, input, select, textarea {
   .filter-group { flex-direction: column; }
   .filter-group select { width: 100%; }
   .btn { width: 100%; justify-content: center; }
+  /* Excluir botones del tutorial del width:100% — deben mantener su tamaño natural */
+  .tutorial-footer .btn,
+  .tutorial-nav .btn { width: auto; }
 
   /* Modal full width */
   .modal { padding: 10px; align-items: flex-end; }
